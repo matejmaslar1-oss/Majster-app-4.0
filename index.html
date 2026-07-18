@@ -741,6 +741,16 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
       <svg id="chartSvg" width="100%" height="160" viewBox="0 0 300 160" preserveAspectRatio="none"></svg>
       <div id="chartLabels" style="display:flex; justify-content:space-between; margin-top:6px;"></div>
     </div>
+
+    <div class="card">
+      <div class="stat-label" style="margin-bottom:4px;">Záloha dát</div>
+      <div class="folder-meta" style="margin-bottom:12px;">Stiahni si zálohu všetkých zákaziek, priečinkov, fotiek a poznámok, alebo ju obnov zo súboru.</div>
+      <div class="btn-row" style="margin-bottom:0;">
+        <button class="btn btn-outline" id="exportBackupBtn">Zálohovať</button>
+        <button class="btn btn-primary" id="importBackupBtn">Obnoviť zo zálohy</button>
+      </div>
+      <input type="file" id="backupFileInput" accept="application/json,.json" style="display:none;" />
+    </div>
   </div>
 
   <!-- Bottom nav -->
@@ -860,7 +870,7 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
 }
-function showConfirm(title, text, onConfirm) {
+function showConfirm(title, text, onConfirm, confirmLabel = 'Vymazať', confirmColor = 'var(--danger)') {
   const root = document.getElementById('modalRoot');
   root.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
@@ -869,7 +879,7 @@ function showConfirm(title, text, onConfirm) {
         <div class="modal-text">${escapeHtml(text)}</div>
         <div class="modal-actions">
           <button class="btn btn-outline" id="modalCancel">Zrušiť</button>
-          <button class="btn btn-primary" id="modalOk" style="background:var(--danger);">Vymazať</button>
+          <button class="btn btn-primary" id="modalOk" style="background:${confirmColor};">${escapeHtml(confirmLabel)}</button>
         </div>
       </div>
     </div>`;
@@ -1804,6 +1814,68 @@ function drawChart(data) {
 }
 
 /* ================================================================
+   BACKUP / RESTORE
+   ================================================================ */
+async function exportBackup() {
+  try {
+    const [jobs, folders, notes, photos] = await Promise.all([
+      idbGetAll('jobs'), idbGetAll('folders'), idbGetAll('notes'), idbGetAll('photos'),
+    ]);
+    let settings = null;
+    try { settings = await idbGet('settings', 'settings'); } catch (e) { /* none saved */ }
+
+    const backup = {
+      app: 'majster', version: 1, exportedAt: new Date().toISOString(),
+      jobs, folders, notes, photos, settings,
+    };
+    const json = JSON.stringify(backup);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `majster-zaloha-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showToast('Záloha stiahnutá');
+  } catch (e) {
+    showToast('Zálohovanie zlyhalo');
+  }
+}
+
+async function importBackupFromFile(file) {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data || typeof data !== 'object') throw new Error('invalid');
+
+    const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+    const folders = Array.isArray(data.folders) ? data.folders : [];
+    const notes = Array.isArray(data.notes) ? data.notes : [];
+    const photos = Array.isArray(data.photos) ? data.photos : [];
+
+    for (const j of jobs) await idbPut('jobs', j);
+    for (const f of folders) await idbPut('folders', f);
+    for (const n of notes) await idbPut('notes', n);
+    for (const p of photos) await idbPut('photos', p);
+    if (data.settings) await idbPut('settings', data.settings);
+
+    state.jobs = await idbGetAll('jobs');
+    state.folders = await idbGetAll('folders');
+
+    renderJobsList();
+    renderFoldersList();
+    renderHelpFoldersList();
+    renderOverview();
+    showToast(`Obnovené: ${jobs.length} zákaziek, ${folders.length} priečinkov`);
+  } catch (e) {
+    showToast('Súbor zálohy sa nepodarilo prečítať');
+  }
+}
+
+/* ================================================================
    SEED DATA (predvyplnené priečinky v sekcii Pomoc)
    ================================================================ */
 async function seedHelpFolders() {
@@ -1888,6 +1960,19 @@ async function init() {
   });
   document.getElementById('folderCreateBtn').addEventListener('click', () => promptCreateFolder('zakazky'));
   document.getElementById('helpFolderCreateBtn').addEventListener('click', () => promptCreateFolder('pomoc'));
+
+  document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
+  document.getElementById('importBackupBtn').addEventListener('click', () => {
+    document.getElementById('backupFileInput').click();
+  });
+  document.getElementById('backupFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    showConfirm('Obnoviť zo zálohy?', 'Dáta zo záložného súboru sa doplnia k tomu, čo už máš v appke (rovnaké záznamy sa prepíšu). Pokračovať?', async () => {
+      await importBackupFromFile(file);
+      e.target.value = '';
+    }, 'Obnoviť', 'var(--accent)');
+  });
 
   setView('calc');
 
