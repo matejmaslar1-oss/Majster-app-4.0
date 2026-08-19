@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1f24">
+<title>Party Delivery – rozvoz nápojov</title>
+<style>
+  :root{--bg:#1c1f24;--panel:#24282f;--line:#333a44;--ink:#f2f4f7;--dim:#9aa4b2;--accent:#e0a935;--accent2:#2bd576;--r:12px}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;touch-action:pan-y}
+
+  #gate{position:fixed;inset:0;background:#15171b;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center}
+  #gate h2{font-size:20px;margin:0 0 6px}
+  #gate p{color:var(--dim);font-size:15px;max-width:340px;margin:0 0 24px}
+  #gate .g-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  #gate button{padding:14px 26px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;border:none}
+  .g-yes{background:var(--accent);color:#1c1f24}.g-no{background:#2a2f38;color:var(--dim);border:1px solid var(--line)}
+
+  .infobar{background:var(--accent);color:#1c1f24;text-align:center;font-size:13px;font-weight:600;padding:7px 12px}
+  .closedbar{background:#3a1f22;color:#ff8a8a;text-align:center;font-size:13px;font-weight:700;padding:9px 12px;border-bottom:1px solid #5c2a2f}
+
+  header{padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(28,31,36,.96);backdrop-filter:blur(8px);z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .brand{font-size:17px;font-weight:800;letter-spacing:.3px}.brand span{color:var(--accent)}
+  .brand img{display:block}
+  .phone{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--ink);text-decoration:none;margin-top:2px;font-weight:600}
+  .phone svg{width:15px;height:15px;fill:var(--accent)}
+  .gear{background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px}
+  .headinfo{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;flex-shrink:0}
+  .clockbox{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+  .clockbox .cdate{font-weight:700}
+  .clockbox .crow{display:flex;align-items:baseline;gap:8px}
+  .clockbox .crow #clockDay{font-weight:600;opacity:.85}
+  .clockbox .ctime{opacity:.75;font-size:.9em;font-variant-numeric:tabular-nums}
+  .hoursbox{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+  .hoursbox .hstatus{font-weight:700}
+  .hoursbox .hval{opacity:.85;font-size:.9em}
+  .footgear{background:none;border:none;color:var(--line);font-size:15px;cursor:pointer;padding:6px 10px;margin-top:10px;opacity:.5}
+
+  main{max-width:680px;margin:0 auto;padding:12px 12px 150px}
+  .eta{color:var(--dim);font-size:13px;text-align:center;padding:4px 2px 0}
+  .search{margin:8px 2px 0}
+  .search input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:11px 14px;font-size:15px}
+  .cats{display:flex;gap:8px;overflow-x:auto;padding:12px 2px}
+  .cats::-webkit-scrollbar{display:none}
+  .cat{white-space:nowrap;padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--dim);font-size:14px;cursor:pointer;flex-shrink:0}
+  .cat.active{background:var(--accent);color:#1c1f24;border-color:var(--accent);font-weight:700}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .p{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;position:relative}
+  .p img{width:100%;aspect-ratio:1;object-fit:cover;background:#2a2f38}
+  .p .star{position:absolute;top:8px;left:8px;background:var(--accent);color:#1c1f24;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .p .b{padding:10px;display:flex;flex-direction:column;gap:4px;flex:1}
+  .p .n{font-size:14px;font-weight:600;line-height:1.25}
+  .p .pdesc{font-size:12px;color:var(--dim);line-height:1.35}
+  .p .pr{color:var(--accent);font-weight:700;font-size:15px;margin-top:auto}
+  .p .add{margin-top:6px;background:#2a2f38;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px;font-size:14px;font-weight:600;cursor:pointer}
+  .p .qrow{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .p .qrow button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#2a2f38;color:var(--ink);font-size:18px;cursor:pointer}
+  .p .qrow span{flex:1;text-align:center;font-weight:700}
+
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:22px 4px 8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+  label{display:block;font-size:13px;color:var(--dim);margin:10px 0 5px}
+  input,textarea,select{width:100%;background:#2a2f38;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:12px;font-size:15px;font-family:inherit}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);border-color:transparent}
+  textarea{resize:vertical;min-height:60px}
+  .switch{display:flex;align-items:center;gap:10px;padding:6px 0}.switch input{width:auto}
+  .two{display:flex;gap:10px}.two>div{flex:1}
+  .promoRow{display:flex;gap:8px}.promoRow input{flex:1}.promoRow button{width:auto;white-space:nowrap;padding:12px 16px}
+  .giftIcon{background:var(--panel);border:2px solid var(--accent2);color:var(--ink);font-size:22px;width:48px;height:48px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .musicBtn{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:4px 6px;flex-shrink:0}
+  .musicBtn.playing{color:var(--accent)}
+  .giftGrid{display:flex;flex-direction:column;gap:8px}
+  .giftOpt{display:flex;align-items:center;gap:12px;border:2px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:var(--panel)}
+  .giftOpt.sel{border-color:var(--accent2)}
+  .giftOpt img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:#2a2f38;flex-shrink:0}
+  .giftOpt span{font-size:14px;color:var(--dim)}
+  .giftOpt.sel span{color:var(--ink);font-weight:600}
+
+  .summary{font-size:13px;color:var(--dim);padding:4px 2px 0;line-height:1.7}.summary b{color:var(--ink)}
+  .warn{color:#ff8a8a;font-size:13px;margin-top:6px}
+  .okmsg{color:var(--accent2);font-size:13px;margin-top:6px}
+
+  .bar{position:fixed;left:0;right:0;bottom:0;padding:12px 14px;background:rgba(28,31,36,.97);border-top:1px solid var(--line);backdrop-filter:blur(8px)}
+  .bar .row{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  .total{flex:1;font-size:17px;font-weight:700}.total small{display:block;color:var(--dim);font-weight:400;font-size:12px}
+  .send{background:var(--accent);color:#1c1f24;border:none;padding:14px 22px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer}
+  .send[data-blocked="1"]{opacity:.55}
+  .send:disabled{opacity:.4}
+
+  .btn2{background:#2a2f38;border:1px solid var(--line);color:var(--ink);padding:12px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;width:100%}
+  .btn-gold{background:var(--accent);color:#1c1f24;border:none}
+  .btn-red{background:#3a1f22;border-color:#5c2a2f;color:#ff8a8a}
+  .link{background:none;border:none;color:var(--accent);font-size:13px;text-decoration:underline;cursor:pointer;padding:0}
+  .ok{text-align:center;padding:44px 20px}
+  .ok .tick{width:70px;height:70px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:38px;color:#1c1f24}
+  .hidden{display:none}
+  .err{color:#ff6a6a;font-size:13px;margin-top:8px}
+  .muted{color:var(--dim);font-size:14px;text-align:center;padding:30px}
+  .del{background:none;border:none;color:#ff7a7a;font-size:13px;cursor:pointer;padding:6px}
+  .edit{background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;padding:6px}
+  .preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-top:8px}
+  .adminprod{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .adminprod img{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#2a2f38}
+  .adminprod .info{flex:1;min-width:120px}
+  .adminprod .actions{display:flex;gap:6px;flex-wrap:wrap;width:100%;justify-content:flex-end}
+  .toggle-sold{background:none;border:1px solid var(--line);color:var(--dim);font-size:12px;cursor:pointer;padding:5px 10px;border-radius:8px}
+  .toggle-sold.active{border-color:#ff7a7a;color:#ff7a7a}
+  .tabs{display:flex;gap:8px;margin-bottom:12px}
+  .tab{flex:1;padding:10px;text-align:center;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--dim);font-size:14px;font-weight:600;cursor:pointer}
+  .tab.active{background:var(--accent);color:#1c1f24;border-color:var(--accent)}
+  footer{max-width:680px;margin:0 auto;padding:20px 16px 40px;color:var(--dim);font-size:12px;line-height:1.7;border-top:1px solid var(--line)}
+  footer .link{font-size:12px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+  .modal .sheet{background:var(--panel);max-width:680px;width:100%;max-height:80vh;overflow:auto;border-radius:16px 16px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));white-space:pre-line;font-size:13px;line-height:1.7;color:var(--dim);position:relative}
+  .modal .sheet h3{color:var(--ink);margin-top:0;padding-right:30px}
+  .modal .xbtn{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--dim);font-size:26px;cursor:pointer;line-height:1;width:auto;padding:0;z-index:2}
+  .gallery{position:relative;width:100%;aspect-ratio:1;background:#2a2f38;border-radius:12px;overflow:hidden;margin-bottom:14px}
+  .gallery img{width:100%;height:100%;object-fit:cover;display:block}
+  .gnav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .gprev{left:8px}.gnext{right:8px}
+  .gdots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:6px;justify-content:center}
+  .gdots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4)}
+  .gdots span.on{background:var(--accent)}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h2>Overenie veku</h2>
+  <p>Alkohol a tabakové výrobky je možné predávať len osobám starším ako 18 rokov.</p>
+  <div class="g-btns"><button class="g-yes" id="gateYes">Mám viac ako 18 rokov</button><button class="g-no" id="gateNo">Nemám 18</button></div>
+</div>
+
+<div id="infobar" class="infobar hidden"></div>
+<div id="closedbar" class="closedbar hidden"></div>
+
+<header>
+  <div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <img id="logoImg" class="hidden" alt="" style="display:block">
+      <div class="brand" id="brand">Party<span>Delivery</span></div>
+    </div>
+    <a class="phone" id="phone" href="tel:+421900000000">
+      <svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .7-.2 1l-2.3 2.2z"/></svg>
+      <b>0900 000 000</b>
+    </a>
+  </div>
+  <div class="headinfo">
+    <button class="musicBtn hidden" id="musicBtn" title="Hudba">🎵</button>
+    <div class="clockbox" id="clockBox">
+      <span class="cdate" id="clockDate">—</span>
+      <span class="crow"><span id="clockDay">—</span><span class="ctime" id="clockTime">--:--</span></span>
+    </div>
+    <div class="hoursbox" id="hoursBox">
+      <span class="hstatus" id="hoursStatus">—</span>
+      <span class="hval" id="hoursVal">—</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="shop">
+    <div class="eta hidden" id="eta"></div>
+    <div class="search"><input id="q" type="search" placeholder="Hľadať produkt…"></div>
+    <div class="cats" id="cats"></div>
+    <div id="products"><div class="muted">Načítavam…</div></div>
+
+    <h2 id="udajeTitle">Vaše údaje</h2>
+    <div class="card orderForm" id="orderForm">
+      <label>Meno a priezvisko *</label>
+      <input id="f_name" placeholder="Ján Novák">
+      <label>Telefón *</label>
+      <input id="f_phone" type="tel" placeholder="0901 234 567">
+      <label>E-mail (nepovinné, pošleme potvrdenie)</label>
+      <input id="f_email" type="email" placeholder="janko@example.com">
+      <label>Obec doručenia *</label>
+      <select id="f_zone"></select>
+      <label>Ulica a číslo *</label>
+      <input id="f_addr" placeholder="Hlavná 5">
+      <label>Platba</label>
+      <select id="f_pay"><option>Hotovosť pri doručení</option><option>Kartou pri doručení</option></select>
+      <label>Zľavový kód (nepovinné)</label>
+      <div class="promoRow"><input id="f_promo" placeholder="napr. PARTY10"><button class="btn2" id="promoBtn">Použiť</button></div>
+      <div id="promoMsg" class="okmsg hidden"></div>
+      <label>Poznámka (nepovinné)</label>
+      <textarea id="f_note" placeholder="Napr. zvonček nefunguje, zavolajte"></textarea>
+      <div class="switch" id="termsAgreeRow" style="margin-top:8px"><input type="checkbox" id="f_terms"><label for="f_terms" style="margin:0">Súhlasím s <button type="button" class="link" id="termsOpenOrder">obchodnými podmienkami</button></label></div>
+      <div class="summary" id="orderSummary"></div>
+      <div id="minwarn" class="warn hidden"></div>
+      <div id="err" class="err hidden"></div>
+    </div>
+    <div style="text-align:center;padding:6px 0 2px"><button class="footgear" id="gear" title="Admin">⚙︎</button></div>
+  </div>
+
+  <div id="done" class="ok hidden">
+    <div class="tick">✓</div><h1>Objednávka odoslaná!</h1>
+    <p class="muted" id="doneMsg">Čoskoro vás budeme kontaktovať. Ďakujeme.</p>
+    <button class="btn2 btn-gold" id="againBtn" style="max-width:240px;margin:10px auto 0">Objednať znova</button>
+  </div>
+
+  <div id="admin" class="hidden">
+    <div class="tabs"><div class="tab active" data-tab="prod">Produkty</div><div class="tab" data-tab="set">Nastavenia</div><div class="tab" data-tab="gift">Darčeky</div></div>
+
+    <div id="tabProd">
+      <h2 id="prodFormTitle">Pridať produkt</h2>
+      <div class="card">
+        <input type="hidden" id="a_id">
+        <label>Názov *</label><input id="a_name" placeholder="Napr. Jack Daniel's 0,7l">
+        <label>Kategória</label><select id="a_cat"></select>
+        <label>Cena v € (0 = cena dohodou)</label><input id="a_price" type="number" inputmode="decimal" placeholder="24.90">
+        <label>Popis (nepovinné)</label><textarea id="a_desc" placeholder="Napr. Škótska whisky, 40%, 0,7l"></textarea>
+        <label>Fotka (hlavná)</label><input id="a_file" type="file" accept="image/*"><img id="a_prev" class="preview hidden">
+        <label>Ďalšie fotky do galérie (viac naraz)</label><input id="a_gallery_files" type="file" accept="image/*" multiple>
+        <div id="a_gallery_prev" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+        <div class="switch"><input type="checkbox" id="a_feat"><label for="a_feat" style="margin:0">Odporúčané (zobraziť hore)</label></div>
+        <div class="switch"><input type="checkbox" id="a_sold"><label for="a_sold" style="margin:0">Vypredané (skryť z ponuky)</label></div>
+        <div id="a_err" class="err hidden"></div>
+        <div style="height:8px"></div>
+        <button class="btn2 btn-gold" id="a_save">Pridať produkt</button>
+        <div style="height:6px"></div>
+        <button class="btn2 hidden" id="a_cancel">Zrušiť úpravu</button>
+      </div>
+      <h2>Hromadný import (CSV)</h2>
+      <div class="card">
+        <div style="color:var(--dim);font-size:12px;margin-bottom:8px">Nahraj CSV so stĺpcami: <b>name, price, category, description, featured, sold_out, image_url</b>. Duplicitné názvy sa preskočia.</div>
+        <input id="imp_file" type="file" accept=".csv,text/csv">
+        <div id="imp_info" class="muted" style="margin-top:8px"></div>
+      </div>
+      <h2>Existujúce produkty</h2>
+      <input id="a_search" placeholder="🔍 Hľadať produkt podľa názvu…" style="margin-bottom:10px">
+      <div id="adminList"><div class="muted">Načítavam…</div></div>
+    </div>
+
+    <div id="tabSet" class="hidden">
+      <h2>Farby webu</h2>
+      <div class="card">
+        <div style="color:var(--dim);font-size:12px;margin-bottom:8px">Toto zmení farby na celom webe naraz. Ak niečo pokazíš, tlačidlo dole to vráti na pôvodné.</div>
+        <div class="two">
+          <div><label>Pozadie stránky</label><input id="s_col_bg" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Pozadie kariet/panelov</label><input id="s_col_panel" type="color" style="height:44px;padding:4px"></div>
+        </div>
+        <div class="two">
+          <div><label>Farba textu</label><input id="s_col_ink" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Farba tlmeného textu</label><input id="s_col_dim" type="color" style="height:44px;padding:4px"></div>
+        </div>
+        <div class="two">
+          <div><label>Farba orámovania/čiar</label><input id="s_col_line" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Hlavná akcentová farba (zlatá)</label><input id="s_col_accent" type="color" style="height:44px;padding:4px"></div>
+        </div>
+        <div class="two">
+          <div><label>Vedľajšia akcentová (zelená)</label><input id="s_col_accent2" type="color" style="height:44px;padding:4px"></div>
+          <div></div>
+        </div>
+        <button class="btn2" id="s_col_reset" style="margin-top:8px">Vrátiť pôvodné farby</button>
+      </div>
+
+      <h2>Obchod</h2>
+      <div class="card">
+        <div class="switch"><input type="checkbox" id="s_open"><label for="s_open" style="margin:0">Obchod otvorený (ručne)</label></div>
+        <label>Text keď zatvorené</label><input id="s_closed_msg">
+        <label>Info pruh hore</label><input id="s_info" placeholder="Rozvoz · Žilina a okolie">
+        <label>Odhad doručenia (text pre zákazníka)</label><input id="s_eta" placeholder="Doručenie do 60 minút">
+        <div class="two">
+          <div><label>Otvorené od (HH:MM)</label><input id="s_hfrom" placeholder="18:00"></div>
+          <div><label>Do (HH:MM)</label><input id="s_hto" placeholder="03:00"></div>
+        </div>
+        <div style="color:var(--dim);font-size:12px;margin-top:6px">Ak vyplníš hodiny, obchod sa mimo nich sám zatvorí. Nechaj prázdne = riadi len ručný prepínač.</div>
+      </div>
+
+      <h2>Otváracie hodiny (zobrazené v hlavičke)</h2>
+      <div class="card">
+        <div style="color:var(--dim);font-size:12px;margin-bottom:6px">Napíš text pre každý deň, napr. „8:00 – 18:00" alebo „Zatvorené". Zákazníkovi sa vždy zobrazí len dnešný deň.</div>
+        <label>Pondelok</label><input id="s_h_mon" placeholder="8:00 – 18:00">
+        <label>Utorok</label><input id="s_h_tue" placeholder="8:00 – 18:00">
+        <label>Streda</label><input id="s_h_wed" placeholder="8:00 – 18:00">
+        <label>Štvrtok</label><input id="s_h_thu" placeholder="8:00 – 18:00">
+        <label>Piatok</label><input id="s_h_fri" placeholder="8:00 – 20:00">
+        <label>Sobota</label><input id="s_h_sat" placeholder="9:00 – 20:00">
+        <label>Nedeľa</label><input id="s_h_sun" placeholder="Zatvorené">
+        <div class="two" style="margin-top:10px">
+          <div><label>Farba textu hodín</label><input id="s_h_color" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Veľkosť hodín (px)</label><input id="s_h_size" type="number" inputmode="numeric" placeholder="14"></div>
+        </div>
+        <div class="two">
+          <div><label>Farba hodiniek/času</label><input id="s_c_color" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Veľkosť hodiniek (px)</label><input id="s_c_size" type="number" inputmode="numeric" placeholder="14"></div>
+        </div>
+        <div style="border-top:1px solid var(--line);margin:14px 0 4px"></div>
+        <div style="color:var(--dim);font-size:12px;margin-bottom:6px">Nápis stavu sa mení automaticky podľa toho, či je obchod otvorený alebo zatvorený.</div>
+        <div class="two">
+          <div><label>Text keď otvorené</label><input id="s_open_text" placeholder="Otvorené"></div>
+          <div><label>Text keď zatvorené</label><input id="s_closed_text" placeholder="Zatvorené"></div>
+        </div>
+        <div class="two">
+          <div><label>Farba – otvorené</label><input id="s_open_color" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Farba – zatvorené</label><input id="s_closed_color" type="color" style="height:44px;padding:4px"></div>
+        </div>
+      </div>
+
+      <h2>Názov, logo, kontakt</h2>
+      <div class="card">
+        <label>Logo (obrázok)</label><input id="s_logo_file" type="file" accept="image/*">
+        <img id="s_logo_prev" class="preview hidden">
+        <button class="link" id="s_logo_clear" style="margin-top:6px">Odstrániť logo</button>
+        <label>Veľkosť loga (px)</label><input id="s_logo_size" type="number" inputmode="numeric" placeholder="40">
+        <div class="switch"><input type="checkbox" id="s_show_name"><label for="s_show_name" style="margin:0">Zobraziť aj text názvu (popri logu)</label></div>
+        <label>Názov – prvá časť (biela)</label><input id="s_name">
+        <label>Názov – druhá časť (zlatá)</label><input id="s_name2">
+        <label>Veľkosť názvu (px)</label><input id="s_name_size" type="number" inputmode="numeric" placeholder="17">
+        <div class="two">
+          <div><label>Farba – prvá časť názvu</label><input id="s_name_color" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Farba – druhá časť názvu</label><input id="s_name2_color" type="color" style="height:44px;padding:4px"></div>
+        </div>
+        <label>Telefón – zobrazený</label><input id="s_phone_text" placeholder="0948 155 155">
+        <label>Telefón – na volanie</label><input id="s_phone_call" placeholder="+421948155155">
+        <label>Veľkosť telefónu + ikony (px)</label><input id="s_phone_size" type="number" inputmode="numeric" placeholder="14">
+        <div class="two">
+          <div><label>Farba čísla telefónu</label><input id="s_phone_color" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Farba ikony telefónu</label><input id="s_phone_icon_color" type="color" style="height:44px;padding:4px"></div>
+        </div>
+        <label>Veľkosť názvu produktu v detaile (px)</label><input id="s_detail_name_size" type="number" inputmode="numeric" placeholder="20">
+        <label>Veľkosť ceny v detaile (px)</label><input id="s_detail_price_size" type="number" inputmode="numeric" placeholder="18">
+        <label>Veľkosť popisu v detaile (px)</label><input id="s_detail_desc_size" type="number" inputmode="numeric" placeholder="14">
+      </div>
+
+      <h2>Tlačidlo „Odoslať objednávku"</h2>
+      <div class="card">
+        <label>Text tlačidla</label><input id="s_send_text" placeholder="Odoslať objednávku">
+        <div class="two">
+          <div><label>Farba pozadia</label><input id="s_send_bg" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Farba textu</label><input id="s_send_color" type="color" style="height:44px;padding:4px"></div>
+        </div>
+      </div>
+
+      <h2>Cena a počet položiek (dole)</h2>
+      <div class="card">
+        <div class="two">
+          <div><label>Farba ceny</label><input id="s_total_color" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Veľkosť ceny (px)</label><input id="s_total_size" type="number" inputmode="numeric" placeholder="18"></div>
+        </div>
+        <div class="two">
+          <div><label>Farba textu "položiek"</label><input id="s_items_color" type="color" style="height:44px;padding:4px"></div>
+          <div><label>Veľkosť textu "položiek" (px)</label><input id="s_items_size" type="number" inputmode="numeric" placeholder="12"></div>
+        </div>
+      </div>
+
+      <h2>Sekcia „Vaše údaje"</h2>
+      <div class="card">
+        <label>Veľkosť textu (px)</label><input id="s_form_size" type="number" inputmode="numeric" placeholder="15">
+      </div>
+
+      <h2>Ikonka darčeka (pri sume)</h2>
+      <div class="card">
+        <div style="color:var(--dim);font-size:12px;margin-bottom:8px">Zobrazí sa vedľa celkovej sumy, keď má zákazník nárok na darček. Ikonu môžeš zadať ako emoji (napr. 🎁, 🎉, ⭐).</div>
+        <label>Ikona (emoji)</label><input id="s_gift_icon" placeholder="🎁">
+        <label>Farba ikony a orámovania</label><input id="s_gift_color" type="color" style="height:44px;padding:4px">
+      </div>
+
+      <h2>Hudba na pozadí</h2>
+      <div class="card">
+        <div class="switch"><input type="checkbox" id="s_music_on"><label for="s_music_on" style="margin:0">Hudba zapnutá</label></div>
+        <div style="color:var(--dim);font-size:12px;margin:8px 0">Hudba sa spustí po prvom klepnutí zákazníka kdekoľvek na stránke (prehliadače nedovolia spustiť zvuk automaticky). Zákazník ju môže stlmiť tlačidlom 🎵 v hlavičke.</div>
+        <label>Súbor MP3</label>
+        <input id="s_music_file" type="file" accept="audio/*">
+        <div id="s_music_current" class="muted" style="margin-top:6px"></div>
+        <button class="btn2" id="s_music_clear" style="margin-top:8px">Odstrániť hudbu</button>
+      </div>
+
+      <h2>E-mail potvrdenie objednávky</h2>
+      <div class="card">
+        <div style="color:var(--dim);font-size:12px;margin-bottom:8px">Ak chce zákazník e-mailové potvrdenie, zadá si e-mail pri objednávke. Text a obrázok potvrdenia nastavíš vo svojom EmailJS účte (šablóna) – sem len vlož prístupové údaje z emailjs.com.</div>
+        <div class="switch"><input type="checkbox" id="s_email_on"><label for="s_email_on" style="margin:0">E-mail potvrdenie zapnuté</label></div>
+        <label>EmailJS – Service ID</label><input id="s_ej_service" placeholder="service_xxxxxxx">
+        <label>EmailJS – Template ID</label><input id="s_ej_template" placeholder="template_xxxxxxx">
+        <label>EmailJS – Public Key</label><input id="s_ej_key" placeholder="XXXXXXXXXXXXXXXX">
+        <button class="btn2" id="s_ej_test" style="margin-top:8px">Poslať testovací e-mail na moju adresu</button>
+        <div id="s_ej_test_result" class="muted" style="margin-top:6px"></div>
+        <button class="btn2" id="s_ej_lasterr" style="margin-top:8px">Zobraziť poslednú chybu z objednávky</button>
+        <div id="s_ej_lasterr_result" class="muted" style="margin-top:6px"></div>
+      </div>
+
+      <h2>Doprava a suma</h2>
+      <div class="card">
+        <label>Obce a ceny dopravy (obec:cena, každá na nový riadok)</label>
+        <textarea id="s_zones" placeholder="Sabinov:5&#10;Pečovská Nová Ves:3&#10;Prešov:4" style="min-height:90px"></textarea>
+        <label>Minimálna suma objednávky (€, 0 = žiadna)</label><input id="s_min" type="number" inputmode="decimal">
+        <label>Doprava zadarmo nad (€, 0 = vypnuté)</label><input id="s_free" type="number" inputmode="decimal">
+        <div style="color:var(--dim);font-size:12px;margin-top:6px">Ak obec nevyplníš, použije sa „Doprava zadarmo nad". Cena dopravy sa berie podľa zvolenej obce.</div>
+      </div>
+
+      <h2>Zľavový kód</h2>
+      <div class="card">
+        <div class="two">
+          <div><label>Kód</label><input id="s_promo_code" placeholder="PARTY10"></div>
+          <div><label>Zľava %</label><input id="s_promo_pct" type="number" inputmode="decimal" placeholder="10"></div>
+        </div>
+        <div style="color:var(--dim);font-size:12px;margin-top:6px">Nechaj prázdne = žiadny kód.</div>
+      </div>
+
+      <h2>Kategórie</h2>
+      <div class="card"><label>Oddelené čiarkou (poradie = poradie na stránke)</label><textarea id="s_cats"></textarea></div>
+
+      <h2>Pätička / obchodné podmienky</h2>
+      <div class="card">
+        <label>Údaje prevádzkovateľa (pätička)</label><textarea id="s_footer" style="min-height:80px"></textarea>
+        <label>Obchodné podmienky + GDPR (otvorí sa v okne)</label><textarea id="s_terms" style="min-height:100px"></textarea>
+      </div>
+
+      <div id="s_err" class="err hidden"></div>
+      <button class="btn2 btn-gold" id="s_save">Uložiť nastavenia</button>
+    </div>
+
+    <div id="tabGift" class="hidden">
+      <div class="card" style="border-color:#8a6d1a;background:#221d10">
+        <div style="font-size:12px;color:var(--dim);line-height:1.5">
+          Pridaj darčeky, ktoré si zákazník môže vybrať, keď jeho objednávka prekročí nastavenú sumu. Ak je odomknutých viac darčekov naraz, zákazník si vyberie jeden.
+        </div>
+      </div>
+      <h2 id="giftFormTitle">Pridať darček</h2>
+      <div class="card">
+        <input type="hidden" id="gi_id">
+        <label>Názov darčeka</label><input id="gi_name" placeholder="napr. Fľaša tonicu zadarmo">
+        <label>Minimálna suma objednávky (€)</label><input id="gi_min" type="number" inputmode="decimal" placeholder="30">
+        <label>Fotka</label>
+        <input id="gi_file" type="file" accept="image/*">
+        <img id="gi_prev" class="hidden" style="max-width:120px;border-radius:10px;margin-top:8px">
+        <button class="btn2 btn-gold" id="gi_save" style="margin-top:10px">Pridať darček</button>
+        <button class="btn2 hidden" id="gi_cancel" style="margin-top:6px">Zrušiť úpravu</button>
+        <div id="gi_err" class="err hidden"></div>
+      </div>
+      <h2>Existujúce darčeky</h2>
+      <div id="giftList"><div class="muted">Načítavam…</div></div>
+    </div>
+
+    <div style="height:16px"></div>
+    <button class="btn2 btn-red" id="a_logout">Zavrieť admin</button>
+  </div>
+</main>
+
+<audio id="bgMusic" loop preload="none"></audio>
+<footer id="footer" class="hidden"></footer>
+
+<div class="bar" id="bar">
+  <div class="row"><div class="total"><span id="totalPrice">0,00 €</span><small id="totalItems">0 položiek</small></div>
+  <button class="giftIcon hidden" id="giftIconBtn" title="Darček zadarmo">🎁</button>
+  <button class="send" id="send" data-blocked="1">Odoslať objednávku</button></div>
+</div>
+
+<div id="giftModal" class="modal hidden" style="display:none">
+  <div class="sheet" style="max-height:70vh">
+    <button class="xbtn" id="giftModalX">✕</button>
+    <h2 style="margin-top:0">🎁 Vyberte si darček zadarmo</h2>
+    <div id="giftModalList"></div>
+  </div>
+</div>
+
+<div id="detailModal" class="modal hidden" style="display:none">
+  <div class="sheet" style="max-height:92vh">
+    <button class="xbtn" id="detailX">×</button>
+    <div class="gallery" id="detGallery">
+      <img id="detImg" src="" alt="">
+      <button class="gnav gprev" id="detPrev">‹</button>
+      <button class="gnav gnext" id="detNext">›</button>
+      <div class="gdots" id="detDots"></div>
+    </div>
+    <h3 id="detName" style="margin-bottom:6px"></h3>
+    <div id="detPrice" style="color:var(--accent);font-weight:700;font-size:18px;margin-bottom:10px"></div>
+    <div id="detDesc" style="color:var(--dim);font-size:14px;line-height:1.6;white-space:pre-line;margin-bottom:16px"></div>
+    <button class="btn2 btn-gold" id="detAdd">Pridať do košíka</button>
+  </div>
+</div>
+<div id="termsModal" class="modal hidden" style="display:none"><div class="sheet"><button class="xbtn" id="termsX">×</button><h3>Obchodné podmienky</h3><div id="termsText"></div><div style="height:16px"></div><button class="btn2" id="termsClose">Zavrieť</button></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+const SUPABASE_URL="https://lzgatoapdiakbkpqoyfj.supabase.co";
+const SUPABASE_KEY="sb_publishable_VsgkguqufBKy-Nm8vGf5HQ_eaqXC9hV";
+const BUCKET="Kamen";
+const ADMIN_PASS="zmen-ma-123";
+const WEB3FORMS_KEY="2ff88480-e0bf-49c9-a7ba-230e4fe7d8c4";
+const TG_TOKEN="";
+const TG_CHAT_ID="";
+
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let products=[],cart={},activeCat='Všetko',settings={},CATEGORIES=[],ZONES=[],search='',promoOK=false;
+
+const eur=n=>Number(n||0).toFixed(2).replace('.',',')+' €';
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const v=id=>document.getElementById(id).value.trim();
+const num=id=>parseFloat(document.getElementById(id).value)||0;
+
+document.getElementById('gateYes').addEventListener('click',()=>{document.getElementById('gate').style.display='none';});
+document.getElementById('gateNo').addEventListener('click',()=>{document.body.innerHTML='<div style="padding:60px 30px;text-align:center;color:#9aa4b2;font-family:sans-serif"><h2 style="color:#f2f4f7">Prístup zamietnutý</h2><p>Túto stránku môžu používať len osoby staršie ako 18 rokov.</p></div>';});
+
+function parseZones(str){return (str||'').split(/[\n,]/).map(l=>l.trim()).filter(Boolean).map(l=>{const i=l.lastIndexOf(':');if(i<0)return{name:l,fee:0};return{name:l.slice(0,i).trim(),fee:parseFloat(l.slice(i+1))||0};});}
+function isOpenNow(){
+  if(settings.is_open===false)return false;
+  const f=(settings.hours_from||'').trim(),t=(settings.hours_to||'').trim();
+  if(!f||!t)return true;
+  const now=new Date();const cur=now.getHours()*60+now.getMinutes();
+  const[fh,fm]=f.split(':').map(Number),[th,tm]=t.split(':').map(Number);
+  const start=fh*60+(fm||0),end=th*60+(tm||0);
+  return start<=end ? (cur>=start&&cur<=end) : (cur>=start||cur<=end);
+}
+
+async function loadSettings(){
+  try{const{data}=await sb.from('settings').select('*').eq('id',1).single();settings=data||{};}catch(e){settings={};}
+  CATEGORIES=(settings.categories||'Whisky,Rum,Vodka,Gin,Tequila,Likéry,Pálenky,Víno,Pivo,Nealko,Snacky,Ostatné').split(',').map(s=>s.trim()).filter(Boolean);
+  ZONES=parseZones(settings.delivery_zones);
+  applySettings();
+}
+const DAY_KEYS=['hours_sun','hours_mon','hours_tue','hours_wed','hours_thu','hours_fri','hours_sat'];
+const DAY_NAMES=['Nedeľa','Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota'];
+function tickClock(){
+  const now=new Date();
+  const t=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const d=String(now.getDate()).padStart(2,'0')+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+now.getFullYear();
+  const ct=document.getElementById('clockTime'),cd=document.getElementById('clockDate'),cday=document.getElementById('clockDay');
+  if(ct)ct.textContent=t;
+  if(cday)cday.textContent=DAY_NAMES[now.getDay()];
+  if(cd)cd.textContent=d;
+}
+function applyHeaderInfo(){
+  const now=new Date();
+  const todayVal=(settings[DAY_KEYS[now.getDay()]]||'').trim();
+  const hv=document.getElementById('hoursVal');
+  if(hv)hv.textContent=todayVal||'—';
+  // stav Otvorené/Zatvorené
+  const open=isOpenNow();
+  const st=document.getElementById('hoursStatus');
+  if(st){
+    st.textContent=open?(settings.open_text||'Otvorené'):(settings.closed_text||'Zatvorené');
+    st.style.color=open?(settings.open_color||'#2bd576'):(settings.closed_color||'#ff4b4b');
+  }
+  const hSize=Number(settings.hours_size)||14, cSize=Number(settings.clock_size)||14;
+  const hColor=settings.hours_color||'#f2f4f7', cColor=settings.clock_color||'#f2f4f7';
+  const hb=document.getElementById('hoursBox');
+  if(hb){hb.style.fontSize=hSize+'px';}
+  if(hv)hv.style.color=hColor;
+  const cb=document.getElementById('clockBox');
+  if(cb){cb.style.fontSize=cSize+'px';cb.style.color=cColor;}
+  tickClock();
+}
+setInterval(tickClock,1000);
+setInterval(()=>{if(typeof applyHeaderInfo==='function')applyHeaderInfo();},60000);
+function applySettings(){
+  // globálne farby webu (CSS premenné)
+  const root=document.documentElement.style;
+  root.setProperty('--bg',settings.col_bg||'#1c1f24');
+  root.setProperty('--panel',settings.col_panel||'#24282f');
+  root.setProperty('--ink',settings.col_ink||'#f2f4f7');
+  root.setProperty('--dim',settings.col_dim||'#9aa4b2');
+  root.setProperty('--line',settings.col_line||'#333a44');
+  root.setProperty('--accent',settings.col_accent||'#e0a935');
+  root.setProperty('--accent2',settings.col_accent2||'#2bd576');
+  const of=document.getElementById('orderForm');
+  if(of)of.style.fontSize=(Number(settings.form_size)||15)+'px';
+  // hudba
+  const audio=document.getElementById('bgMusic'),mbtn=document.getElementById('musicBtn');
+  if(settings.music_on&&settings.music_url){
+    if(audio.getAttribute('data-src')!==settings.music_url){audio.src=settings.music_url;audio.setAttribute('data-src',settings.music_url);}
+    mbtn.classList.remove('hidden');
+  }else{
+    mbtn.classList.add('hidden');
+    if(!audio.paused)audio.pause();
+  }
+  // emailjs
+  if(settings.email_on&&settings.ej_key&&window.emailjs){try{emailjs.init({publicKey:settings.ej_key});}catch(e){}}
+  const b=document.getElementById('brand'), logoImg=document.getElementById('logoImg');
+  const logoSize=Number(settings.logo_size)||40;
+  const nameSize=Number(settings.name_size)||17;
+  const phoneSize=Number(settings.phone_size)||14;
+  const showName=settings.show_name!==false;
+  // logo
+  if(settings.logo_url){logoImg.src=settings.logo_url;logoImg.style.height=logoSize+'px';logoImg.classList.remove('hidden');}
+  else logoImg.classList.add('hidden');
+  // text názvu
+  if(showName){b.innerHTML=esc(settings.shop_name||'Party')+'<span>'+esc(settings.shop_name2||'Delivery')+'</span>';b.style.fontSize=nameSize+'px';b.classList.remove('hidden');}
+  else b.classList.add('hidden');
+  b.style.color=settings.name_color||'#f2f4f7';
+  const nameSpan=b.querySelector('span');if(nameSpan)nameSpan.style.color=settings.name2_color||'#d9a441';
+  // telefón + ikona
+  const ph=document.getElementById('phone');ph.href='tel:'+(settings.phone_call||'+421900000000');ph.querySelector('b').textContent=settings.phone_text||'0900 000 000';
+  ph.style.fontSize=phoneSize+'px';
+  ph.querySelector('b').style.color=settings.phone_color||'#f2f4f7';
+  const svg=ph.querySelector('svg');if(svg){svg.style.width=(phoneSize+1)+'px';svg.style.height=(phoneSize+1)+'px';svg.style.fill=settings.phone_icon_color||'#d9a441';}
+  // tlačidlo Odoslať objednávku
+  const sendBtn=document.getElementById('send');
+  if(sendBtn){
+    sendBtn.dataset.textNormal=settings.send_text||'Odoslať objednávku';
+    if(sendBtn.textContent!=='Odosielam…')sendBtn.textContent=sendBtn.dataset.textNormal;
+    sendBtn.style.background=settings.send_bg||'';
+    sendBtn.style.color=settings.send_color||'';
+  }
+  applyHeaderInfo();
+  const ib=document.getElementById('infobar');if(settings.info_bar){ib.textContent=settings.info_bar;ib.classList.remove('hidden');}else ib.classList.add('hidden');
+  const et=document.getElementById('eta');if(settings.eta){et.textContent='⏱ '+settings.eta;et.classList.remove('hidden');}else et.classList.add('hidden');
+  const open=isOpenNow();
+  const cb=document.getElementById('closedbar');
+  if(!open){cb.textContent=settings.closed_msg||'Momentálne zatvorené';cb.classList.remove('hidden');}else cb.classList.add('hidden');
+  document.getElementById('send').dataset.closed=open?'':'1';
+  // zóny do selectu
+  const z=document.getElementById('f_zone');z.innerHTML='';
+  if(ZONES.length){ZONES.forEach(zn=>{const o=document.createElement('option');o.value=zn.name;o.textContent=zn.name+(zn.fee>0?' (+'+eur(zn.fee)+')':' (doprava zadarmo)');z.appendChild(o);});}
+  else{const o=document.createElement('option');o.value='';o.textContent='(obce nenastavené)';z.appendChild(o);}
+  // pätička
+  const ft=document.getElementById('footer');
+  let fh=esc(settings.footer_info||'').replace(/\n/g,'<br>');
+  if((settings.footer_info||'').trim())ft.classList.remove('hidden');else ft.classList.add('hidden');
+  ft.innerHTML=fh;
+  // súhlas s podmienkami pri objednávke – zobraz len ak sú vyplnené
+  const tRow=document.getElementById('termsAgreeRow');
+  if(settings.terms&&settings.terms.trim())tRow.classList.remove('hidden');else tRow.classList.add('hidden');
+  // select kategórií v admine
+  const sel=document.getElementById('a_cat');sel.innerHTML='';CATEGORIES.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+}
+function closeTerms(){const m=document.getElementById('termsModal');m.classList.add('hidden');m.style.display='none';}
+document.getElementById('termsClose').addEventListener('click',closeTerms);
+document.getElementById('termsX').addEventListener('click',closeTerms);
+document.getElementById('termsModal').addEventListener('click',e=>{if(e.target.id==='termsModal')closeTerms();});
+document.getElementById('termsOpenOrder').addEventListener('click',()=>{const m=document.getElementById('termsModal');document.getElementById('termsText').textContent=settings.terms||'';m.classList.remove('hidden');m.style.display='flex';});
+
+async function loadProducts(){
+  const{data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  if(error){document.getElementById('products').innerHTML='<div class="muted">Nepodarilo sa načítať produkty.</div>';return;}
+  products=data||[];renderCats();renderShop();
+  if(!document.getElementById('admin').classList.contains('hidden'))renderAdmin();
+}
+function renderCats(){
+  const used=[...new Set(products.filter(p=>!p.sold_out).map(p=>p.category).filter(Boolean))];
+  const list=['Všetko',...CATEGORIES.filter(c=>used.includes(c))];
+  document.getElementById('cats').innerHTML=list.map(c=>`<div class="cat ${c===activeCat?'active':''}" data-cat="${esc(c)}">${esc(c)}</div>`).join('');
+}
+document.getElementById('cats').addEventListener('click',e=>{const c=e.target.dataset.cat;if(!c)return;activeCat=c;renderCats();renderShop();});
+document.getElementById('q').addEventListener('input',e=>{search=e.target.value.toLowerCase().trim();renderShop();});
+function visibleProducts(){
+  let list=products.filter(p=>!p.sold_out);
+  if(activeCat!=='Všetko')list=list.filter(p=>p.category===activeCat);
+  if(search)list=list.filter(p=>(p.name||'').toLowerCase().includes(search));
+  if(activeCat==='Všetko'&&!search)list.sort((a,b)=>(b.featured?1:0)-(a.featured?1:0));
+  return list;
+}
+function renderShop(){
+  const wrap=document.getElementById('products');const list=visibleProducts();
+  if(list.length===0){wrap.innerHTML='<div class="muted">'+(search?'Nič sa nenašlo.':'Zatiaľ žiadne produkty.')+'</div>';updateBar();return;}
+  wrap.innerHTML='<div class="grid">'+list.map(p=>{
+    const q=cart[p.id]||0;
+    const ctrl=q>0?`<div class="qrow"><button data-m="${p.id}">−</button><span>${q}</span><button data-p="${p.id}">+</button></div>`:`<button class="add" data-p="${p.id}">Pridať</button>`;
+    return `<div class="p" data-open="${p.id}">${p.featured?'<div class="star">★ TOP</div>':''}${p.image_url?`<img src="${p.image_url}">`:`<img>`}<div class="b"><div class="n">${esc(p.name)}</div><div class="pr">${Number(p.price)>0?eur(p.price):'dohodou'}</div>${ctrl}</div></div>`;
+  }).join('')+'</div>';
+  updateBar();
+}
+document.getElementById('products').addEventListener('click',e=>{
+  const p=e.target.dataset.p,m=e.target.dataset.m;
+  if(p){cart[p]=(cart[p]||0)+1;renderShop();return;}
+  if(m){cart[m]=Math.max(0,(cart[m]||0)-1);if(cart[m]===0)delete cart[m];renderShop();return;}
+  const card=e.target.closest('[data-open]');
+  if(card)openDetail(card.dataset.open);
+});
+
+/* DETAIL PRODUKTU + GALÉRIA */
+let detImages=[],detIndex=0,detProdId=null;
+function parseGallery(str){return (str||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean);}
+function openDetail(id){
+  const p=products.find(x=>String(x.id)===String(id));if(!p)return;
+  detProdId=id;detImages=[];
+  if(p.image_url)detImages.push(p.image_url);
+  parseGallery(p.gallery).forEach(u=>{if(u!==p.image_url)detImages.push(u);});
+  if(detImages.length===0)detImages=[''];
+  detIndex=0;
+  const dn=document.getElementById('detName');
+  dn.textContent=p.name;dn.style.fontSize=(Number(settings.detail_name_size)||20)+'px';
+  const dp=document.getElementById('detPrice');
+  dp.textContent=Number(p.price)>0?eur(p.price):'cena dohodou';dp.style.fontSize=(Number(settings.detail_price_size)||18)+'px';
+  const dd=document.getElementById('detDesc');
+  dd.textContent=p.description||'';dd.style.fontSize=(Number(settings.detail_desc_size)||14)+'px';
+  showDetImg();
+  const m=document.getElementById('detailModal');m.classList.remove('hidden');m.style.display='flex';
+}
+function showDetImg(){
+  document.getElementById('detImg').src=detImages[detIndex]||'';
+  const multi=detImages.length>1;
+  document.getElementById('detPrev').style.display=multi?'flex':'none';
+  document.getElementById('detNext').style.display=multi?'flex':'none';
+  const dots=document.getElementById('detDots');
+  dots.innerHTML=multi?detImages.map((_,i)=>`<span class="${i===detIndex?'on':''}"></span>`).join(''):'';
+}
+document.getElementById('detPrev').addEventListener('click',()=>{detIndex=(detIndex-1+detImages.length)%detImages.length;showDetImg();});
+document.getElementById('detNext').addEventListener('click',()=>{detIndex=(detIndex+1)%detImages.length;showDetImg();});
+function closeDetail(){const m=document.getElementById('detailModal');m.classList.add('hidden');m.style.display='none';}
+document.getElementById('detailX').addEventListener('click',closeDetail);
+document.getElementById('detailModal').addEventListener('click',e=>{if(e.target.id==='detailModal')closeDetail();});
+document.getElementById('detAdd').addEventListener('click',()=>{cart[detProdId]=(cart[detProdId]||0)+1;renderShop();closeDetail();});
+(function(){let x0=null;const g=document.getElementById('detGallery');
+  g.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
+  g.addEventListener('touchend',e=>{if(x0===null||detImages.length<2)return;const dx=e.changedTouches[0].clientX-x0;
+    if(dx<-40){detIndex=(detIndex+1)%detImages.length;showDetImg();}
+    else if(dx>40){detIndex=(detIndex-1+detImages.length)%detImages.length;showDetImg();}x0=null;});
+})();
+function currentZoneFee(){
+  const name=document.getElementById('f_zone').value;const z=ZONES.find(x=>x.name===name);return z?z.fee:0;
+}
+function calc(){
+  let items=0,sub=0;
+  products.forEach(p=>{const q=cart[p.id]||0;items+=q;sub+=q*Number(p.price);});
+  let fee=ZONES.length?currentZoneFee():0;
+  const free=Number(settings.free_over)||0;if(free>0&&sub>=free)fee=0;
+  let discount=0;if(promoOK){const pct=Number(settings.promo_pct)||0;discount=sub*pct/100;}
+  const min=Number(settings.min_order)||0;
+  return{items,sub,fee,discount,total:Math.max(0,sub-discount)+fee,min,free};
+}
+function updateBar(){
+  const c=calc();
+  document.getElementById('totalItems').textContent=c.items+' '+(c.items===1?'položka':c.items>=2&&c.items<=4?'položky':'položiek');
+  document.getElementById('totalPrice').textContent=eur(c.total);
+  document.getElementById('totalPrice').style.color=settings.total_color||'';
+  document.getElementById('totalPrice').style.fontSize=(Number(settings.total_size)||18)+'px';
+  document.getElementById('totalItems').style.color=settings.items_color||'';
+  document.getElementById('totalItems').style.fontSize=(Number(settings.items_size)||12)+'px';
+  renderGiftPicker();
+  const s=document.getElementById('orderSummary');
+  if(c.items>0){
+    let h=`Medzisúčet: <b>${eur(c.sub)}</b>`;
+    if(c.discount>0)h+=`<br>Zľava: <b>−${eur(c.discount)}</b>`;
+    h+=`<br>Doprava: <b>${c.fee>0?eur(c.fee):'zadarmo'}</b>`;
+    if(c.free>0&&c.sub<c.free)h+=`<br><span style="color:var(--accent)">Do dopravy zadarmo chýba ${eur(c.free-c.sub)}</span>`;
+    h+=`<br>Spolu: <b>${eur(c.total)}</b>`;s.innerHTML=h;
+  }else s.innerHTML='';
+  const w=document.getElementById('minwarn');const below=c.min>0&&c.sub<c.min&&c.items>0;
+  if(below){w.textContent=`Minimálna objednávka je ${eur(c.min)}. Pridajte ešte za ${eur(c.min-c.sub)}.`;w.classList.remove('hidden');}else w.classList.add('hidden');
+  const closed=document.getElementById('send').dataset.closed==='1';
+  document.getElementById('send').dataset.blocked=(c.items===0||below||closed)?'1':'';
+}
+document.getElementById('f_zone').addEventListener('change',updateBar);
+
+document.getElementById('promoBtn').addEventListener('click',()=>{
+  const code=(settings.promo_code||'').trim().toUpperCase();
+  const entered=v('f_promo').toUpperCase();const msg=document.getElementById('promoMsg');
+  if(code&&entered===code&&(Number(settings.promo_pct)||0)>0){promoOK=true;msg.textContent='Kód platí: −'+settings.promo_pct+'%';msg.classList.remove('hidden');}
+  else{promoOK=false;msg.textContent='Neplatný kód.';msg.style.color='#ff8a8a';msg.classList.remove('hidden');}
+  updateBar();
+});
+
+function scrollToUdaje(){
+  const el=document.getElementById('udajeTitle');if(!el)return;
+  const header=document.querySelector('header');
+  const headerH=header?header.getBoundingClientRect().height:0;
+  const y=el.getBoundingClientRect().top+window.pageYOffset-headerH-12;
+  window.scrollTo({top:y,behavior:'smooth'});
+}
+document.getElementById('send').addEventListener('click',async()=>{
+  if(document.getElementById('send').dataset.blocked==='1'){
+    scrollToUdaje();
+    return;
+  }
+  const name=v('f_name'),phone=v('f_phone'),email=v('f_email'),zone=document.getElementById('f_zone').value,addr=v('f_addr'),pay=document.getElementById('f_pay').value,note=v('f_note');
+  const err=document.getElementById('err');
+  if(!name||!phone||!addr){err.textContent='Vyplňte meno, telefón aj adresu.';err.classList.remove('hidden');scrollToUdaje();return;}
+  if(settings.terms&&settings.terms.trim()&&!document.getElementById('f_terms').checked){err.textContent='Prosím potvrďte súhlas s obchodnými podmienkami.';err.classList.remove('hidden');return;}
+  err.classList.add('hidden');
+  const btn=document.getElementById('send');btn.disabled=true;btn.textContent='Odosielam…';
+  const c=calc();let lines=[];
+  products.forEach(p=>{const q=cart[p.id]||0;if(q>0)lines.push(`${q}x ${p.name} (${eur(Number(p.price)*q)})`);});
+  const order=lines.join('\n');
+  const fulladdr=(zone?zone+', ':'')+addr;
+  const chosenGift=selectedGiftId?allGifts.find(g=>String(g.id)===String(selectedGiftId)):null;
+  const giftLine=chosenGift?`\n\n🎁 Darček: ${chosenGift.name}`:'';
+  const summary=`NOVÁ OBJEDNÁVKA\nMeno: ${name}\nTelefón: ${phone}\nAdresa: ${fulladdr}\nPlatba: ${pay}\nPoznámka: ${note||'—'}\n\n${order}${giftLine}\n\nMedzisúčet: ${eur(c.sub)}${c.discount>0?'\nZľava: −'+eur(c.discount):''}\nDoprava: ${c.fee>0?eur(c.fee):'zadarmo'}\nSPOLU: ${eur(c.total)}`;
+  try{
+    if(WEB3FORMS_KEY&&!WEB3FORMS_KEY.startsWith('SEM')){
+      await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
+        body:JSON.stringify({access_key:WEB3FORMS_KEY,subject:'Objednávka – '+name+' ('+eur(c.total)+')',from_name:'Party Delivery',Meno:name,Telefon:phone,Adresa:fulladdr,Platba:pay,Poznamka:note||'—',Objednavka:order,Darcek:chosenGift?chosenGift.name:'—',Medzisucet:eur(c.sub),Zlava:c.discount>0?'−'+eur(c.discount):'—',Doprava:c.fee>0?eur(c.fee):'zadarmo',Spolu:eur(c.total)})});
+    }
+    if(TG_TOKEN&&TG_CHAT_ID){await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHAT_ID,text:summary})});}
+    // e-mail potvrdenie zákazníkovi (nesmie zhodiť odoslanie objednávky, ak zlyhá)
+    if(settings.email_on&&email&&settings.ej_service&&settings.ej_template&&settings.ej_key&&window.emailjs){
+      try{
+        emailjs.init({publicKey:settings.ej_key});
+        await emailjs.send(settings.ej_service,settings.ej_template,{
+          to_email:email,meno:name,telefon:phone,adresa:fulladdr,platba:pay,poznamka:note||'—',
+          objednavka:order,darcek:chosenGift?chosenGift.name:'',medzisucet:eur(c.sub),
+          zlava:c.discount>0?'−'+eur(c.discount):'—',doprava:c.fee>0?eur(c.fee):'zadarmo',suma:eur(c.total)
+        });
+      }catch(ejErr){console.error('EmailJS chyba pri objednávke:',ejErr);try{localStorage.setItem('lastEmailError',JSON.stringify({time:new Date().toISOString(),error:ejErr.text||ejErr.message||String(ejErr)}));}catch(e2){}}
+    }else if(settings.email_on&&email){
+      try{localStorage.setItem('lastEmailError',JSON.stringify({time:new Date().toISOString(),error:'Chýba konfigurácia: service='+(!!settings.ej_service)+' template='+(!!settings.ej_template)+' key='+(!!settings.ej_key)+' sdk='+(!!window.emailjs)}));}catch(e2){}
+    }
+    document.getElementById('shop').classList.add('hidden');document.getElementById('bar').classList.add('hidden');
+    document.getElementById('done').classList.remove('hidden');window.scrollTo(0,0);
+  }catch(e){err.textContent='Nepodarilo sa odoslať. Skúste znova.';err.classList.remove('hidden');btn.disabled=false;btn.textContent=btn.dataset.textNormal||'Odoslať objednávku';}
+});
+document.getElementById('againBtn').addEventListener('click',()=>{
+  cart={};promoOK=false;selectedGiftId=null;document.getElementById('done').classList.add('hidden');
+  document.getElementById('shop').classList.remove('hidden');document.getElementById('bar').classList.remove('hidden');
+  document.getElementById('send').textContent=document.getElementById('send').dataset.textNormal||'Odoslať objednávku';
+  ['f_name','f_phone','f_email','f_addr','f_note','f_promo'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('f_terms').checked=false;
+  document.getElementById('promoMsg').classList.add('hidden');
+  renderShop();window.scrollTo(0,0);
+});
+
+/* ADMIN */
+// ===== Hromadný import CSV =====
+function parseCSV(text){
+  text=text.replace(/^\ufeff/,'');
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    }else{
+      if(c==='"')q=true;
+      else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(c==='\r'){}
+      else cur+=c;
+    }
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows.filter(r=>r.length&&r.some(x=>x.trim()!==''));
+}
+document.getElementById('imp_file').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  const info=document.getElementById('imp_info');
+  info.textContent='Čítam súbor…';
+  let text;try{text=await file.text();}catch(err){info.textContent='Nepodarilo sa načítať súbor.';return;}
+  const rows=parseCSV(text);
+  if(rows.length<2){info.textContent='Súbor je prázdny alebo nemá dáta.';document.getElementById('imp_file').value='';return;}
+  const head=rows[0].map(h=>h.trim().toLowerCase());
+  const idx=n=>head.indexOf(n);
+  const iName=idx('name'),iPrice=idx('price'),iCat=idx('category'),iDesc=idx('description'),iFeat=idx('featured'),iSold=idx('sold_out'),iImg=idx('image_url');
+  if(iName<0){info.textContent='Chýba stĺpec "name". Skontroluj hlavičku CSV.';document.getElementById('imp_file').value='';return;}
+  const parsed=[];
+  for(let r=1;r<rows.length;r++){
+    const c=rows[r];const name=(c[iName]||'').trim();if(!name)continue;
+    parsed.push({
+      name,
+      price:iPrice>=0?(parseFloat(String(c[iPrice]||'0').replace(',','.'))||0):0,
+      category:iCat>=0?(c[iCat]||'').trim():'',
+      description:iDesc>=0?(c[iDesc]||'').trim():'',
+      featured:iFeat>=0?/^(true|1|ano|áno)$/i.test((c[iFeat]||'').trim()):false,
+      sold_out:iSold>=0?/^(true|1|ano|áno)$/i.test((c[iSold]||'').trim()):false,
+      gallery:'',
+      image_url:iImg>=0?((c[iImg]||'').trim()||null):null
+    });
+  }
+  if(!parsed.length){info.textContent='Nenašli sa žiadne produkty.';document.getElementById('imp_file').value='';return;}
+  const mode=prompt('Načítaných '+parsed.length+' produktov.\n\nNapíš:\n1 = Pridať k existujúcim\n2 = Zmazať všetko a nahrať nové\n(prázdne = Zrušiť)');
+  if(mode!=='1'&&mode!=='2'){info.textContent='Import zrušený.';document.getElementById('imp_file').value='';return;}
+  info.textContent='Importujem…';
+  try{
+    if(mode==='2'){
+      if(!confirm('Naozaj ZMAZAŤ všetky existujúce produkty a nahradiť ich novými?')){info.textContent='Import zrušený.';document.getElementById('imp_file').value='';return;}
+      const del=await sb.from('products').delete().neq('id','00000000-0000-0000-0000-000000000000');
+      if(del.error)throw del.error;
+      products=[];
+    }
+    const existing=new Set(products.map(p=>(p.name||'').trim().toLowerCase()));
+    const toInsert=[],skipped=[];
+    parsed.forEach(p=>{const key=p.name.toLowerCase();if(existing.has(key)){skipped.push(p.name);}else{existing.add(key);toInsert.push(p);}});
+    let inserted=0;
+    for(let i=0;i<toInsert.length;i+=50){
+      const batch=toInsert.slice(i,i+50);
+      const r=await sb.from('products').insert(batch);
+      if(r.error)throw r.error;
+      inserted+=batch.length;
+    }
+    await loadProducts();
+    info.innerHTML='Hotovo. Pridaných: <b>'+inserted+'</b>'+(skipped.length?', preskočených duplicít: <b>'+skipped.length+'</b>':'');
+  }catch(err){
+    info.textContent='Chyba pri importe: '+(err.message||err);
+  }
+  document.getElementById('imp_file').value='';
+});
+
+document.getElementById('gear').addEventListener('click',()=>{const p=prompt('Admin heslo:');if(p===ADMIN_PASS)openAdmin();else if(p!==null)alert('Nesprávne heslo.');});
+function openAdmin(){document.getElementById('shop').classList.add('hidden');document.getElementById('bar').classList.add('hidden');document.getElementById('admin').classList.remove('hidden');fillSettingsForm();renderAdmin();}
+// ===== Darčeky (admin) =====
+let gifts=[],pendingGiftFile=null;
+async function loadGifts(){
+  const{data,error}=await sb.from('gifts').select('*').order('min_amount',{ascending:true});
+  if(!error)gifts=data||[];
+}
+function renderGiftAdmin(){
+  loadGifts().then(()=>{
+    const wrap=document.getElementById('giftList');
+    if(!gifts.length){wrap.innerHTML='<div class="muted">Zatiaľ žiadne darčeky.</div>';return;}
+    wrap.innerHTML=gifts.map(g=>`<div class="card adminprod">${g.image_url?`<img src="${g.image_url}">`:`<img>`}<div class="info"><div class="n">${esc(g.name)}</div><div style="color:var(--dim);font-size:12px">Od ${eur(g.min_amount)}</div></div><div class="actions"><button class="edit" data-giftedit="${g.id}">Upraviť</button><button class="del" data-giftdel="${g.id}">Zmazať</button></div></div>`).join('');
+  });
+}
+document.getElementById('gi_file').addEventListener('change',e=>{const f=e.target.files[0];pendingGiftFile=f||null;const prev=document.getElementById('gi_prev');if(f){prev.src=URL.createObjectURL(f);prev.classList.remove('hidden');}});
+document.getElementById('gi_save').addEventListener('click',async()=>{
+  const err=document.getElementById('gi_err');err.classList.add('hidden');
+  const id=document.getElementById('gi_id').value;
+  const name=v('gi_name');const min_amount=parseFloat((document.getElementById('gi_min').value||'0').replace(',','.'))||0;
+  if(!name){err.textContent='Zadaj názov darčeka.';err.classList.remove('hidden');return;}
+  const btn=document.getElementById('gi_save');btn.disabled=true;btn.textContent='Ukladám…';
+  try{
+    let image_url=null;
+    if(id){const existing=gifts.find(g=>String(g.id)===String(id));image_url=existing?existing.image_url:null;}
+    if(pendingGiftFile){const ext=(pendingGiftFile.name.split('.').pop()||'jpg');const path='gift_'+Date.now()+'.'+ext;const up=await sb.storage.from(BUCKET).upload(path,pendingGiftFile,{upsert:true});if(up.error)throw up.error;image_url=sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;}
+    if(id){const r=await sb.from('gifts').update({name,min_amount,image_url}).eq('id',id);if(r.error)throw r.error;}
+    else{const r=await sb.from('gifts').insert({name,min_amount,image_url});if(r.error)throw r.error;}
+    document.getElementById('gi_id').value='';document.getElementById('gi_name').value='';document.getElementById('gi_min').value='';document.getElementById('gi_file').value='';document.getElementById('gi_prev').classList.add('hidden');pendingGiftFile=null;
+    document.getElementById('giftFormTitle').textContent='Pridať darček';btn.textContent='Pridať darček';document.getElementById('gi_cancel').classList.add('hidden');
+    renderGiftAdmin();
+  }catch(e){err.textContent='Chyba: '+(e.message||e);err.classList.remove('hidden');}
+  btn.disabled=false;if(btn.textContent==='Ukladám…')btn.textContent=id?'Uložiť zmeny':'Pridať darček';
+});
+document.getElementById('gi_cancel').addEventListener('click',()=>{
+  document.getElementById('gi_id').value='';document.getElementById('gi_name').value='';document.getElementById('gi_min').value='';document.getElementById('gi_file').value='';document.getElementById('gi_prev').classList.add('hidden');pendingGiftFile=null;
+  document.getElementById('giftFormTitle').textContent='Pridať darček';document.getElementById('gi_save').textContent='Pridať darček';document.getElementById('gi_cancel').classList.add('hidden');
+});
+document.getElementById('giftList').addEventListener('click',async e=>{
+  const ed=e.target.dataset.giftedit,del=e.target.dataset.giftdel;
+  if(del&&confirm('Naozaj zmazať tento darček?')){await sb.from('gifts').delete().eq('id',del);renderGiftAdmin();}
+  if(ed){const g=gifts.find(x=>String(x.id)===String(ed));if(!g)return;
+    document.getElementById('gi_id').value=g.id;document.getElementById('gi_name').value=g.name;document.getElementById('gi_min').value=g.min_amount;
+    document.getElementById('gi_prev').src=g.image_url||'';document.getElementById('gi_prev').classList.toggle('hidden',!g.image_url);
+    document.getElementById('giftFormTitle').textContent='Upraviť darček';document.getElementById('gi_save').textContent='Uložiť zmeny';document.getElementById('gi_cancel').classList.remove('hidden');
+    window.scrollTo(0,0);
+  }
+});
+
+// ===== Darčeky (výber zákazníkom) =====
+let allGifts=[],selectedGiftId=null;
+async function loadShopGifts(){
+  const{data,error}=await sb.from('gifts').select('*').order('min_amount',{ascending:true});
+  if(!error)allGifts=data||[];
+}
+function renderGiftPicker(){
+  const btn=document.getElementById('giftIconBtn');if(!btn)return;
+  const c=calc();
+  const unlocked=allGifts.filter(g=>c.sub>=Number(g.min_amount));
+  if(!unlocked.length){btn.classList.add('hidden');selectedGiftId=null;renderGiftModalList(unlocked);return;}
+  if(!unlocked.find(g=>String(g.id)===String(selectedGiftId)))selectedGiftId=unlocked[0].id;
+  btn.classList.remove('hidden');
+  btn.style.color=settings.gift_color||'';
+  btn.style.borderColor=settings.gift_color||'';
+  btn.textContent=settings.gift_icon||'🎁';
+  renderGiftModalList(unlocked);
+}
+function renderGiftModalList(unlocked){
+  const list=document.getElementById('giftModalList');if(!list)return;
+  if(!unlocked.length){list.innerHTML='<div class="muted">Zatiaľ nemáte nárok na darček.</div>';return;}
+  list.innerHTML='<div class="giftGrid">'+unlocked.map(g=>`<div class="giftOpt${String(g.id)===String(selectedGiftId)?' sel':''}" data-gift="${g.id}">${g.image_url?`<img src="${g.image_url}">`:''}<span>${esc(g.name)}</span></div>`).join('')+'</div>';
+}
+document.getElementById('giftIconBtn').addEventListener('click',()=>{
+  const m=document.getElementById('giftModal');m.classList.remove('hidden');m.style.display='flex';
+});
+document.getElementById('giftModalX').addEventListener('click',()=>{
+  const m=document.getElementById('giftModal');m.classList.add('hidden');m.style.display='none';
+});
+document.getElementById('giftModal').addEventListener('click',e=>{if(e.target.id==='giftModal'){e.target.classList.add('hidden');e.target.style.display='none';}});
+document.getElementById('giftModalList').addEventListener('click',e=>{
+  const opt=e.target.closest('.giftOpt');
+  if(opt){selectedGiftId=opt.dataset.gift;const c=calc();renderGiftModalList(allGifts.filter(g=>c.sub>=Number(g.min_amount)));}
+});
+
+document.getElementById('a_logout').addEventListener('click',()=>{document.getElementById('admin').classList.add('hidden');document.getElementById('shop').classList.remove('hidden');document.getElementById('bar').classList.remove('hidden');});
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('tabProd').classList.toggle('hidden',t.dataset.tab!=='prod');document.getElementById('tabSet').classList.toggle('hidden',t.dataset.tab!=='set');document.getElementById('tabGift').classList.toggle('hidden',t.dataset.tab!=='gift');if(t.dataset.tab==='gift')renderGiftAdmin();}));
+document.getElementById('a_file').addEventListener('change',e=>{const f=e.target.files[0],prev=document.getElementById('a_prev');if(f){prev.src=URL.createObjectURL(f);prev.classList.remove('hidden');}});
+document.getElementById('a_save').addEventListener('click',async()=>{
+  const id=v('a_id'),name=v('a_name'),price=num('a_price'),category=document.getElementById('a_cat').value;
+  const description=v('a_desc');
+  const featured=document.getElementById('a_feat').checked,sold_out=document.getElementById('a_sold').checked;
+  const file=document.getElementById('a_file').files[0];
+  const galFiles=document.getElementById('a_gallery_files').files;
+  const err=document.getElementById('a_err');
+  if(!name){err.textContent='Zadaj názov produktu.';err.classList.remove('hidden');return;}err.classList.add('hidden');
+  const btn=document.getElementById('a_save');btn.disabled=true;btn.textContent='Ukladám…';
+  try{
+    let image_url;
+    if(file){const ext=(file.name.split('.').pop()||'jpg');const path=Date.now()+'.'+ext;const up=await sb.storage.from(BUCKET).upload(path,file,{upsert:true});if(up.error)throw up.error;image_url=sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;}
+    let galUrls=[];
+    if(id){const ex=products.find(x=>String(x.id)===String(id));if(ex&&ex.gallery)galUrls=parseGallery(ex.gallery);}
+    for(let i=0;i<galFiles.length;i++){const f=galFiles[i];const ext=(f.name.split('.').pop()||'jpg');const path='g_'+Date.now()+'_'+i+'.'+ext;const up=await sb.storage.from(BUCKET).upload(path,f,{upsert:true});if(up.error)throw up.error;galUrls.push(sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);}
+    const gallery=galUrls.join('\n');
+    if(id){const patch={name,price,category,description,featured,sold_out,gallery};if(image_url)patch.image_url=image_url;const r=await sb.from('products').update(patch).eq('id',id);if(r.error)throw r.error;}
+    else{const r=await sb.from('products').insert({name,price,category,description,featured,sold_out,gallery,image_url:image_url||null});if(r.error)throw r.error;}
+    resetProdForm();await loadProducts();
+  }catch(e){err.textContent='Chyba: '+(e.message||e);err.classList.remove('hidden');}
+  btn.disabled=false;btn.textContent=v('a_id')?'Uložiť zmeny':'Pridať produkt';
+});
+document.getElementById('a_cancel').addEventListener('click',resetProdForm);
+function resetProdForm(){['a_id','a_name','a_price','a_desc','a_file','a_gallery_files'].forEach(i=>document.getElementById(i).value='');document.getElementById('a_feat').checked=false;document.getElementById('a_sold').checked=false;document.getElementById('a_prev').classList.add('hidden');document.getElementById('a_gallery_prev').innerHTML='';document.getElementById('prodFormTitle').textContent='Pridať produkt';document.getElementById('a_save').textContent='Pridať produkt';document.getElementById('a_cancel').classList.add('hidden');}
+function renderGalleryPrev(p){
+  const wrap=document.getElementById('a_gallery_prev');const urls=parseGallery(p.gallery);
+  if(urls.length===0){wrap.innerHTML='';return;}
+  wrap.innerHTML='<div style="width:100%;color:var(--dim);font-size:12px;margin-bottom:4px">Existujúce fotky (× zmaže):</div>'+urls.map(u=>`<div style="position:relative"><img src="${esc(u)}" style="width:56px;height:56px;object-fit:cover;border-radius:8px"><button data-galdel="${esc(u)}" style="position:absolute;top:-6px;right:-6px;background:#3a1f22;color:#ff8a8a;border:1px solid #5c2a2f;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;padding:0">×</button></div>`).join('');
+}
+document.getElementById('a_gallery_prev').addEventListener('click',async e=>{
+  const url=e.target.dataset.galdel;if(!url)return;const id=v('a_id');if(!id){alert('Najprv ulož produkt.');return;}
+  if(!confirm('Zmazať túto fotku z galérie?'))return;
+  const p=products.find(x=>String(x.id)===String(id));if(!p)return;
+  const urls=parseGallery(p.gallery).filter(u=>u!==url);
+  const r=await sb.from('products').update({gallery:urls.join('\n')}).eq('id',id);
+  if(r.error){alert('Chyba: '+r.error.message);return;}
+  await loadProducts();const np=products.find(x=>String(x.id)===String(id));if(np)renderGalleryPrev(np);
+});
+function renderAdmin(){
+  const wrap=document.getElementById('adminList');
+  const q=(document.getElementById('a_search').value||'').trim().toLowerCase();
+  let list=q?products.filter(p=>(p.name||'').toLowerCase().includes(q)):products.slice();
+  list.sort((a,b)=>(b.sold_out?1:0)-(a.sold_out?1:0));
+  if(products.length===0){wrap.innerHTML='<div class="muted">Žiadne produkty.</div>';return;}
+  if(list.length===0){wrap.innerHTML='<div class="muted">Nič nenájdené pre „'+esc(q)+'".</div>';return;}
+  wrap.innerHTML=list.map(p=>`<div class="card adminprod">${p.image_url?`<img src="${p.image_url}">`:`<img>`}<div class="info"><div class="n">${esc(p.name)}${p.featured?' · <span style="color:var(--accent)">TOP</span>':''}${p.sold_out?' · <span style="color:#ff8a8a">vypredané</span>':''}</div><div style="color:var(--dim);font-size:12px">${esc(p.category||'—')} · ${Number(p.price)>0?eur(p.price):'dohodou'}</div></div><div class="actions"><button class="toggle-sold${p.sold_out?' active':''}" data-toggle="${p.id}">${p.sold_out?'Označiť dostupné':'Označiť vypredané'}</button><button class="edit" data-edit="${p.id}">Upraviť</button><button class="del" data-del="${p.id}">Zmazať</button></div></div>`).join('');
+}
+document.getElementById('a_search').addEventListener('input',renderAdmin);
+document.getElementById('adminList').addEventListener('click',async e=>{
+  const del=e.target.dataset.del,ed=e.target.dataset.edit,tg=e.target.dataset.toggle;
+  if(del&&confirm('Naozaj zmazať tento produkt?')){await sb.from('products').delete().eq('id',del);await loadProducts();}
+  if(tg){
+    const p=products.find(x=>String(x.id)===String(tg));if(!p)return;
+    const newVal=!p.sold_out;
+    e.target.disabled=true;
+    const{error}=await sb.from('products').update({sold_out:newVal}).eq('id',tg);
+    if(error){alert('Chyba: '+error.message);e.target.disabled=false;return;}
+    await loadProducts();
+  }
+  if(ed){const p=products.find(x=>String(x.id)===String(ed));if(!p)return;document.getElementById('a_id').value=p.id;document.getElementById('a_name').value=p.name;document.getElementById('a_price').value=Number(p.price)||'';document.getElementById('a_desc').value=p.description||'';document.getElementById('a_cat').value=p.category||CATEGORIES[0];document.getElementById('a_feat').checked=!!p.featured;document.getElementById('a_sold').checked=!!p.sold_out;document.getElementById('a_prev').classList.add('hidden');document.getElementById('a_file').value='';document.getElementById('a_gallery_files').value='';renderGalleryPrev(p);document.getElementById('prodFormTitle').textContent='Upraviť produkt';document.getElementById('a_save').textContent='Uložiť zmeny';document.getElementById('a_cancel').classList.remove('hidden');window.scrollTo(0,0);}
+});
+/* logo upload */
+let pendingLogo=null;
+let pendingMusic=null;
+document.getElementById('s_music_file').addEventListener('change',e=>{const f=e.target.files[0];if(f){pendingMusic=f;document.getElementById('s_music_current').textContent='Vybraný nový súbor: '+f.name;}});
+document.getElementById('s_music_clear').addEventListener('click',()=>{pendingMusic='CLEAR';document.getElementById('s_music_file').value='';document.getElementById('s_music_current').textContent='Hudba sa odstráni po uložení nastavení.';});
+document.getElementById('s_ej_lasterr').addEventListener('click',()=>{
+  const box=document.getElementById('s_ej_lasterr_result');
+  try{
+    const raw=localStorage.getItem('lastEmailError');
+    if(!raw){box.textContent='Zatiaľ žiadna zaznamenaná chyba (buď ešte nikto neobjednal s e-mailom, alebo to funguje).';return;}
+    const d=JSON.parse(raw);
+    box.innerHTML='Čas: '+d.time+'<br>Chyba: '+esc(d.error);
+  }catch(e){box.textContent='Nepodarilo sa načítať uloženú chybu.';}
+});
+document.getElementById('s_ej_test').addEventListener('click',async()=>{
+  const res=document.getElementById('s_ej_test_result');
+  const service=v('s_ej_service'),template=v('s_ej_template'),key=v('s_ej_key');
+  if(!service||!template||!key){res.textContent='Najprv vyplň Service ID, Template ID a Public Key.';res.style.color='#ff8a8a';return;}
+  const myEmail=prompt('Na aký e-mail poslať test?');if(!myEmail)return;
+  res.textContent='Posielam test…';res.style.color='';
+  try{
+    emailjs.init({publicKey:key});
+    await emailjs.send(service,template,{to_email:myEmail,meno:'Test Testovací',telefon:'0900 000 000',adresa:'Testovacia 1, Testville',platba:'Hotovosť pri doručení',poznamka:'Toto je testovací e-mail z admina.',objednavka:'1x Testovací produkt (9,99 €)',darcek:'',medzisucet:'9,99 €',zlava:'—',doprava:'zadarmo',suma:'9,99 €'});
+    res.textContent='Test odoslaný na '+myEmail+'. Skontroluj schránku (aj spam).';res.style.color='#2bd576';
+  }catch(e){res.textContent='Chyba: '+(e.text||e.message||e);res.style.color='#ff8a8a';}
+});
+document.getElementById('s_logo_file').addEventListener('change',e=>{const f=e.target.files[0];if(f){pendingLogo=f;const prev=document.getElementById('s_logo_prev');prev.src=URL.createObjectURL(f);prev.classList.remove('hidden');}});
+document.getElementById('s_logo_clear').addEventListener('click',()=>{pendingLogo='CLEAR';document.getElementById('s_logo_prev').classList.add('hidden');document.getElementById('s_logo_file').value='';alert('Logo sa odstráni po uložení nastavení.');});
+function fillSettingsForm(){
+  const g=(id,val)=>document.getElementById(id).value=val;
+  g('s_col_bg',settings.col_bg||'#1c1f24');g('s_col_panel',settings.col_panel||'#24282f');
+  g('s_col_ink',settings.col_ink||'#f2f4f7');g('s_col_dim',settings.col_dim||'#9aa4b2');
+  g('s_col_line',settings.col_line||'#333a44');g('s_col_accent',settings.col_accent||'#e0a935');
+  g('s_col_accent2',settings.col_accent2||'#2bd576');
+  g('s_total_color',settings.total_color||'#e0a935');g('s_total_size',Number(settings.total_size)||18);
+  g('s_items_color',settings.items_color||'#9aa4b2');g('s_items_size',Number(settings.items_size)||12);
+  g('s_form_size',Number(settings.form_size)||15);
+  g('s_gift_icon',settings.gift_icon||'🎁');g('s_gift_color',settings.gift_color||'#2bd576');
+  document.getElementById('s_open').checked=settings.is_open!==false;
+  g('s_closed_msg',settings.closed_msg||'');g('s_info',settings.info_bar||'');g('s_eta',settings.eta||'');
+  g('s_hfrom',settings.hours_from||'');g('s_hto',settings.hours_to||'');
+  g('s_h_mon',settings.hours_mon||'');g('s_h_tue',settings.hours_tue||'');g('s_h_wed',settings.hours_wed||'');
+  g('s_h_thu',settings.hours_thu||'');g('s_h_fri',settings.hours_fri||'');g('s_h_sat',settings.hours_sat||'');g('s_h_sun',settings.hours_sun||'');
+  g('s_h_color',settings.hours_color||'#f2f4f7');g('s_h_size',Number(settings.hours_size)||14);
+  g('s_c_color',settings.clock_color||'#f2f4f7');g('s_c_size',Number(settings.clock_size)||14);
+  g('s_open_text',settings.open_text||'Otvorené');g('s_closed_text',settings.closed_text||'Zatvorené');
+  g('s_open_color',settings.open_color||'#2bd576');g('s_closed_color',settings.closed_color||'#ff4b4b');
+  document.getElementById('s_show_name').checked=settings.show_name!==false;
+  g('s_logo_size',Number(settings.logo_size)||40);
+  g('s_name_size',Number(settings.name_size)||17);
+  g('s_detail_name_size',Number(settings.detail_name_size)||20);
+  g('s_detail_price_size',Number(settings.detail_price_size)||18);
+  g('s_detail_desc_size',Number(settings.detail_desc_size)||14);
+  g('s_phone_size',Number(settings.phone_size)||14);
+  g('s_name',settings.shop_name||'Party');g('s_name2',settings.shop_name2||'Delivery');
+  g('s_name_color',settings.name_color||'#f2f4f7');g('s_name2_color',settings.name2_color||'#d9a441');
+  g('s_phone_text',settings.phone_text||'');g('s_phone_call',settings.phone_call||'');
+  g('s_phone_color',settings.phone_color||'#f2f4f7');g('s_phone_icon_color',settings.phone_icon_color||'#d9a441');
+  g('s_send_text',settings.send_text||'Odoslať objednávku');
+  g('s_send_bg',settings.send_bg||'#d9a441');g('s_send_color',settings.send_color||'#1c1f24');
+  g('s_zones',settings.delivery_zones||'');g('s_min',Number(settings.min_order)||'');g('s_free',Number(settings.free_over)||'');
+  g('s_promo_code',settings.promo_code||'');g('s_promo_pct',Number(settings.promo_pct)||'');
+  g('s_cats',settings.categories||CATEGORIES.join(','));g('s_footer',settings.footer_info||'');g('s_terms',settings.terms||'');
+  pendingLogo=null;const prev=document.getElementById('s_logo_prev');if(settings.logo_url){prev.src=settings.logo_url;prev.classList.remove('hidden');}else prev.classList.add('hidden');
+  pendingMusic=null;document.getElementById('s_music_file').value='';
+  document.getElementById('s_music_on').checked=!!settings.music_on;
+  document.getElementById('s_music_current').textContent=settings.music_url?'Aktuálna hudba je nahraná.':'Zatiaľ žiadna hudba nahraná.';
+  document.getElementById('s_email_on').checked=!!settings.email_on;
+  g('s_ej_service',settings.ej_service||'');g('s_ej_template',settings.ej_template||'');g('s_ej_key',settings.ej_key||'');
+}
+document.getElementById('s_col_reset').addEventListener('click',()=>{
+  document.getElementById('s_col_bg').value='#1c1f24';
+  document.getElementById('s_col_panel').value='#24282f';
+  document.getElementById('s_col_ink').value='#f2f4f7';
+  document.getElementById('s_col_dim').value='#9aa4b2';
+  document.getElementById('s_col_line').value='#333a44';
+  document.getElementById('s_col_accent').value='#e0a935';
+  document.getElementById('s_col_accent2').value='#2bd576';
+  alert('Farby vrátené na pôvodné. Klikni "Uložiť nastavenia" pre potvrdenie.');
+});
+document.getElementById('s_save').addEventListener('click',async()=>{
+  const err=document.getElementById('s_err');const btn=document.getElementById('s_save');btn.disabled=true;btn.textContent='Ukladám…';
+  try{
+    let logo_url=settings.logo_url||'';
+    if(pendingLogo==='CLEAR')logo_url='';
+    else if(pendingLogo){const ext=(pendingLogo.name.split('.').pop()||'png');const path='logo_'+Date.now()+'.'+ext;const up=await sb.storage.from(BUCKET).upload(path,pendingLogo,{upsert:true});if(up.error)throw up.error;logo_url=sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;}
+    let music_url=settings.music_url||'';
+    if(pendingMusic==='CLEAR')music_url='';
+    else if(pendingMusic){const ext=(pendingMusic.name.split('.').pop()||'mp3');const path='music_'+Date.now()+'.'+ext;const up=await sb.storage.from(BUCKET).upload(path,pendingMusic,{upsert:true});if(up.error)throw up.error;music_url=sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;}
+    const patch={is_open:document.getElementById('s_open').checked,closed_msg:v('s_closed_msg'),info_bar:v('s_info'),eta:v('s_eta'),hours_from:v('s_hfrom'),hours_to:v('s_hto'),shop_name:v('s_name'),shop_name2:v('s_name2'),phone_text:v('s_phone_text'),phone_call:v('s_phone_call'),delivery_zones:v('s_zones'),min_order:num('s_min'),free_over:num('s_free'),promo_code:v('s_promo_code'),promo_pct:num('s_promo_pct'),categories:v('s_cats'),footer_info:v('s_footer'),terms:v('s_terms'),logo_url,music_url,music_on:document.getElementById('s_music_on').checked,
+      email_on:document.getElementById('s_email_on').checked,ej_service:v('s_ej_service'),ej_template:v('s_ej_template'),ej_key:v('s_ej_key'),logo_size:num('s_logo_size')||40,name_size:num('s_name_size')||17,phone_size:num('s_phone_size')||14,detail_name_size:num('s_detail_name_size')||20,detail_price_size:num('s_detail_price_size')||18,detail_desc_size:num('s_detail_desc_size')||14,show_name:document.getElementById('s_show_name').checked,
+      hours_mon:v('s_h_mon'),hours_tue:v('s_h_tue'),hours_wed:v('s_h_wed'),hours_thu:v('s_h_thu'),hours_fri:v('s_h_fri'),hours_sat:v('s_h_sat'),hours_sun:v('s_h_sun'),
+      hours_color:document.getElementById('s_h_color').value,hours_size:num('s_h_size')||14,
+      clock_color:document.getElementById('s_c_color').value,clock_size:num('s_c_size')||14,
+      open_text:v('s_open_text')||'Otvorené',closed_text:v('s_closed_text')||'Zatvorené',
+      open_color:document.getElementById('s_open_color').value,closed_color:document.getElementById('s_closed_color').value,
+      name_color:document.getElementById('s_name_color').value,name2_color:document.getElementById('s_name2_color').value,
+      phone_color:document.getElementById('s_phone_color').value,phone_icon_color:document.getElementById('s_phone_icon_color').value,
+      send_text:v('s_send_text')||'Odoslať objednávku',send_bg:document.getElementById('s_send_bg').value,send_color:document.getElementById('s_send_color').value,
+      col_bg:document.getElementById('s_col_bg').value,col_panel:document.getElementById('s_col_panel').value,
+      col_ink:document.getElementById('s_col_ink').value,col_dim:document.getElementById('s_col_dim').value,
+      col_line:document.getElementById('s_col_line').value,col_accent:document.getElementById('s_col_accent').value,
+      col_accent2:document.getElementById('s_col_accent2').value,
+      total_color:document.getElementById('s_total_color').value,total_size:num('s_total_size')||18,
+      items_color:document.getElementById('s_items_color').value,items_size:num('s_items_size')||12,
+      form_size:num('s_form_size')||15,
+      gift_icon:v('s_gift_icon')||'🎁',gift_color:document.getElementById('s_gift_color').value};
+    const r=await sb.from('settings').update(patch).eq('id',1);if(r.error)throw r.error;
+    settings={...settings,...patch};CATEGORIES=patch.categories.split(',').map(s=>s.trim()).filter(Boolean);ZONES=parseZones(patch.delivery_zones);
+    applySettings();renderCats();renderShop();updateBar();pendingLogo=null;pendingMusic=null;
+    err.style.color='var(--accent2)';err.textContent='Uložené ✓';err.classList.remove('hidden');setTimeout(()=>err.classList.add('hidden'),2000);
+  }catch(e){err.style.color='';err.textContent='Chyba: '+(e.message||e);err.classList.remove('hidden');}
+  btn.disabled=false;btn.textContent='Uložiť nastavenia';
+});
+
+document.getElementById('detailModal').style.display='none';
+document.getElementById('detailModal').classList.add('hidden');
+document.getElementById('termsModal').style.display='none';
+document.getElementById('termsModal').classList.add('hidden');
+
+// hudba: spustenie po prvom klepnutí (Safari nedovolí autoplay bez interakcie)
+let musicStarted=false;
+function tryStartMusic(){
+  if(musicStarted)return;
+  const audio=document.getElementById('bgMusic');
+  if(!settings.music_on||!settings.music_url)return;
+  audio.volume=0.5;
+  audio.play().then(()=>{musicStarted=true;document.getElementById('musicBtn').classList.add('playing');}).catch(()=>{});
+}
+document.addEventListener('click',tryStartMusic,{once:false});
+document.getElementById('musicBtn').addEventListener('click',e=>{
+  e.stopPropagation();
+  const audio=document.getElementById('bgMusic'),btn=document.getElementById('musicBtn');
+  if(audio.paused){audio.play().then(()=>{musicStarted=true;btn.classList.add('playing');}).catch(()=>{});}
+  else{audio.pause();btn.classList.remove('playing');}
+});
+
+(async()=>{await loadSettings();await loadProducts();await loadShopGifts();updateBar();})();
+</script>
+</body>
+</html>
